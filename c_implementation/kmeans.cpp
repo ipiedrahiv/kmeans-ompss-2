@@ -248,29 +248,29 @@ void kMeansClustering(vector<Point>* points, int k, size_t maxIter, long double 
 	auto finish = std::chrono::high_resolution_clock::now();
 
 	ofstream time;
-    time.open("time.csv");
+    	time.open("time.csv");
     
-    time << std::chrono::duration_cast<std::chrono::nanoseconds>(finish-start).count() <<  "ns\n";
+   	time << std::chrono::duration_cast<std::chrono::nanoseconds>(finish-start).count() <<  "ns\n";
     
-    time.close();
-    // */
+   	time.close();
+    	// */
 	
 
 	ofstream myfile;
   	myfile.open ("pointlabel.csv");
-    for (int i =  0; i < points->size(); i++) {
-    	myfile << points->at(i).x << "," << points->at(i).y << "," << points->at(i).cluster << endl;
-    } 
+    	for (int i =  0; i < points->size(); i++) {
+    		myfile << points->at(i).x << "," << points->at(i).y << "," << points->at(i).cluster << endl;
+    	}		 
   	myfile.close();	
 	// */
 	
 	
 	ofstream myfile1;
-    myfile1.open ("centroids.txt");
+    	myfile1.open ("centroids.txt");
 	myfile1 << "[" << endl;
 	for (int i =  0; i < k; i++) {
-        myfile1 <<  "[" << centroids[i].x << "," << centroids[i].y << "]," << endl;
-    }
+        	myfile1 <<  "[" << centroids[i].x << "," << centroids[i].y << "]," << endl;
+    	}
 	myfile1 << "]" << endl;
 	myfile1.close();
 	// */
