@@ -1,0 +1,21 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	Development	//
+Point	kmeans.cpp	/^    Point():$/;"	f	struct:Point
+Point	kmeans.cpp	/^    Point(dtype x, dtype y):$/;"	f	struct:Point
+Point	kmeans.cpp	/^struct Point {$/;"	s	file:
+cluster	kmeans.cpp	/^    int cluster; \/\/ Which cluster is this point associated to$/;"	m	struct:Point	file:
+distance	kmeans.cpp	/^    dtype distance(Point p) {$/;"	f	struct:Point
+dtype	kmeans.cpp	/^typedef double dtype;$/;"	t	file:
+kMeansClustering	kmeans.cpp	/^void kMeansClustering(vector < Point > * points, int k, size_t maxIter, dtype tol) {$/;"	f
+main	kmeans.cpp	/^main() {$/;"	f
+minDist	kmeans.cpp	/^    dtype minDist; \/\/ How far away is this point from its nearest cluster. Default to max double.$/;"	m	struct:Point	file:
+randomInit	kmeans.cpp	/^vector < Point > randomInit(vector < Point > * points, int k) {$/;"	f
+readFile	kmeans.cpp	/^vector < Point > readFile(string filename) {$/;"	f
+shift	kmeans.cpp	/^    dtype shift(Point p) {$/;"	f	struct:Point
+tolerance	kmeans.cpp	/^dtype tolerance(vector < Point > * points, dtype tol) {$/;"	f
+x	kmeans.cpp	/^    dtype x, y; \/\/ Two dimentional points, in order to turn them into n-dimensional points we will later use vectors$/;"	m	struct:Point	file:
+y	kmeans.cpp	/^    dtype x, y; \/\/ Two dimentional points, in order to turn them into n-dimensional points we will later use vectors$/;"	m	struct:Point	file:
