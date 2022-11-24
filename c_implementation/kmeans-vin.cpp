@@ -110,7 +110,8 @@ dtype tolerance(Point* points, size_t N, dtype tol) {
         dtype meanVar = (varX + varY) / 2;
 
         //return meanVar * tol;
-        return 0.00043888131958223433;
+        return 0.00043888131958223433; // good centroids
+        //return 0.00043888131958223433; // bad centroids
     }
 }
 
@@ -130,15 +131,17 @@ Point* randomInit(Point* points, int N, int k) {
         cout << centroids[i].x << ", " << centroids[i].y << endl;
     } // Print randomly generated centroids */
 
-  /*
-    		centroids.push_back(Point(-0.8297, 2.2032));
-        centroids.push_back(Point(-4.9989, -1.9767));
-        centroids.push_back(Point(-3.5324, -4.0766));
-        centroids.push_back(Point(-3.1374, -1.5444));
-        centroids.push_back(Point(-1.0323, 0.3882));
-    	centroids.push_back(Point(-0.8081, 1.8522));
-    	centroids.push_back(Point(-2.9555, 3.7811)); // Optimal centroids */
-
+  
+    	centroids[0] = Point(-0.8297, 2.2032);
+        centroids[1] = Point(-4.9989, -1.9767);
+        centroids[2] = Point(-3.5324, -4.0766);
+        centroids[3] = Point(-3.1374, -1.5444);
+        centroids[4] = Point(-1.0323, 0.3882);
+    	centroids[5] = Point(-0.8081, 1.8522);
+    	centroids[6] = Point(-2.9555, 3.7811); // Optimal centroids */
+                                               //
+        cout << "AAAA" <<centroids[6].y << endl;
+/*
     centroids[0] = Point(-1.08756, 0.480849);
     centroids[1] = Point(-3.12783, -1.43567);
     centroids[2] = Point(-4.99813, -1.80588);
@@ -168,6 +171,13 @@ void kMeansClustering(Point* points, int N, int k, size_t maxIter, dtype tol) {
     auto start = std::chrono::high_resolution_clock::now();
 
     for (size_t iter = 0; iter < maxIter; iter++) {
+
+        // print centroids
+        cout << "Centroides: [";
+        for (int i = 0; i < k-1; i++) {
+            cout << " [" << centroids[i].x << ", " << centroids[i].y << "]," << endl;
+        }
+        cout << " [" << centroids[k-1].x << ", " << centroids[k-1].y << "]]" << endl;
 
         // Set aux vectors to 0
         for (int j = 0; j < k; j++) {
@@ -215,6 +225,7 @@ void kMeansClustering(Point* points, int N, int k, size_t maxIter, dtype tol) {
         dtype totalShift = 0.0;
         for (int j = 0; j < k; j++) {
             totalShift += centroidShift[j];
+            cout << "centroid shift for " << j << ": " << centroidShift[j] << endl;
         }
         cout << std::setprecision(20) << totalShift << endl;
 
@@ -258,7 +269,7 @@ void kMeansClustering(Point* points, int N, int k, size_t maxIter, dtype tol) {
 
 int main() {
 
-    Point* source = readFile("/home/vincent/Descargas/Telegram Desktop/uniform_small_2d_lowstddev_samples.csv", 10000);
+    Point* source = readFile("/home/bscuser/Workspace/pe/kmeans-ompss-2/c_implementation/uniform_small_2d_lowstddev_samples.csv", 10000);
     kMeansClustering( source, 10000, 7, 300, 0.0001);
     return 0;
 

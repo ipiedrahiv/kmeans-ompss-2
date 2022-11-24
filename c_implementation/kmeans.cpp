@@ -51,9 +51,14 @@ struct Point {
         cluster(-1),
         minDist(__DBL_MAX__) {} // User value initialisation list
 
-    dtype distance(Point p) {
+    /*dtype distance(Point p) {
         return sqrt((p.x - x) * (p.x - x) + (p.y - y) * (p.y - y)); // Return euclidean distance from the current point vs another given point. When we torn Point into an n-dim Point, we will replace this with a loop.
+    }*/
+
+    dtype distance(Point p) {
+        return ((p.x - x) * (p.x - x) + (p.y - y) * (p.y - y));
     }
+
 
     dtype shift(Point p) {
         return ((p.x - x) * (p.x - x) + (p.y - y) * (p.y - y));
@@ -181,6 +186,13 @@ void kMeansClustering(vector < Point > * points, int k, size_t maxIter, dtype to
 
     for (size_t iter = 0; iter < maxIter; iter++) {
 
+        // print centroids
+        cout << "Centroides: ["<< endl; 
+        for (int i = 0; i < k-1; i++) {
+            cout << " [" << centroids[i].x << " " << centroids[i].y << "]" << endl;
+        }
+        cout << " [" << centroids[k].x << " " << centroids[k].y << "]]" << endl;
+
         // Set aux vectors to 0
         fill(nPoints.begin(), nPoints.end(), 0);
         fill(sumX.begin(), sumX.end(), 0);
@@ -216,17 +228,22 @@ void kMeansClustering(vector < Point > * points, int k, size_t maxIter, dtype to
         //Point oldCentroid;
         //Point newCentroid;
         // Compute the new centroids
-        for (int i = 0; i < centroids.size(); i++) {
-            Point oldCentroid = centroids[i];
+        
+        vector< Point > oldCentroids = centroids;
 
+        for (int i = 0; i < centroids.size(); i++) {
             Point newCentroid;
             newCentroid.x = sumX[i] / nPoints[i];
             newCentroid.y = sumY[i] / nPoints[i];
 
             centroids[i] = newCentroid;
-
-            centroidShift[i] = oldCentroid.shift(newCentroid);
         } // */
+       
+        for (int i = 0; i < k; i++) {
+            centroidShift[i] = oldCentroids[i].shift(centroids[i]);
+            //cout << "centroid shift for " << i << ": " << centroidShift[i] << endl;
+        } 
+
 
         dtype totalShift = 0.0;
         for (int i = 0; i < centroidShift.size(); i++) {
