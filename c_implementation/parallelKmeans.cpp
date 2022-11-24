@@ -1,20 +1,15 @@
 #include <ctime>
-
 #include <fstream>
-
 #include <iostream>
-
 #include <sstream>
-
 #include <vector>
-
 #include <cmath>
-
 #include <iomanip>
-
 #include <chrono>
 
 using namespace std;
+
+typedef double dtype;
 
 /* Using struct to represent datapoints. Structs are very much like classes, but all members are public by default.
 A point will contain the information of its coordinates, its closest centroid and how far away it is from that centroid.
@@ -33,9 +28,9 @@ cout << p1.distance(p2) << endl;
 */
 
 struct Point {
-    long double x, y; // Two dimentional points, in order to turn them into n-dimensional points we will later use vectors
+    dtype x, y; // Two dimentional points, in order to turn them into n-dimensional points we will later use vectors
     int cluster; // Which cluster is this point associated to
-    long double minDist; // How far away is this point from its nearest cluster. Default to max double.
+    dtype minDist; // How far away is this point from its nearest cluster. Default to max double.
 
     Point():
         x(0.0),
@@ -43,201 +38,196 @@ struct Point {
         cluster(-1),
         minDist(__DBL_MAX__) {} // Default initialisation list
 
-    Point(long double x, long double y):
+    Point(dtype x, dtype y):
         x(x),
         y(y),
         cluster(-1),
         minDist(__DBL_MAX__) {} // User value initialisation list
 
-    long double distance(Point p) {
-        return sqrt((p.x - x) * (p.x - x) + (p.y - y) * (p.y - y)); // Return euclidean distance from the current point vs another given point. When we torn Point into an n-dim Point, we will replace this with a loop.
+    dtype distance(Point *p) {
+        return sqrt((p->x - x) * (p->x - x) + (p->y - y) * (p->y - y)); // Return euclidean distance from the current point vs another given point. When we torn Point into an n-dim Point, we will replace this with a loop.
     }
 
-    long double shift(Point p) {
-        return ((p.x - x) * (p.x - x) + (p.y - y) * (p.y - y));
+    dtype shift(Point *p) {
+        return ((p->x - x) * (p->x - x) + (p->y - y) * (p->y - y));
     }
 
 };
 
 /* Reading data from the .csv file and using it to create a vector of Points. */
 
-vector < Point > readFile(string filename) {
-    vector < Point > points;
+Point* readFile(string filename, size_t N) {
+    Point* points = (Point* ) malloc(N*sizeof(Point));
     string line;
     ifstream file(filename);
-
+    size_t pId = 0;
     while (getline(file, line)) {
         stringstream lineStream(line);
         string bit;
-        long double x, y;
+        dtype x, y;
         getline(lineStream, bit, ',');
         x = stof(bit);
         getline(lineStream, bit, '\n');
         y = stof(bit);
 
-        points.push_back(Point(x, y));
+        points[pId] = Point(x, y);
+        pId++;
     }
 
-    //for (int i =  0; i < points.size(); i++) {
-    //cout << points[i].x << "," << points[i].y << endl;
+    //for (int i =  0; i < N; i++) {
+    //    cout << points[i].x << "," << points[i].y << endl;
     //}
 
     return points;
 }
 
-long double tolerance(vector < Point > * points, long double tol) {
+dtype tolerance(Point* points, size_t N, dtype tol) {
     if (tol == 0) {
         return 0;
     } else { // Partiendo del principio de que no le vamos a pasar datos sparse
-        int n = points -> size();
-        long double sumX;
-        long double sumY;
+        dtype sumX = 0;
+        dtype sumY = 0;
 
-        for (int i = 0; i < n; i++) {
-            sumX = points -> at(i).x;
-            sumY = points -> at(i).y;
+        for (int i = 0; i < N; i++) {
+            sumX += points[i].x;
+            sumY += points[i].y;
         }
 
-        long double meanX = sumX / n;
-        long double meanY = sumY / n;
+        dtype meanX = sumX / N;
+        dtype meanY = sumY / N;
 
-        long double vX;
-        long double vY;
+        dtype vX = 0;
+        dtype vY = 0;
 
-        for (int i = 0; i < n; i++) {
-            vX += ((points -> at(i).x - meanX) * (points -> at(i).x - meanX));
-            vY += ((points -> at(i).y - meanY) * (points -> at(i).y - meanY));
+        for (int i = 0; i < N; i++) {
+            vX += ((points[i].x - meanX) * (points[i].x - meanX));
+            vY += ((points[i].y - meanY) * (points[i].y - meanY));
         }
 
-        long double varX = vX / (n - 1);
-        long double varY = vX / (n - 1);
+        dtype varX = vX / (N - 1);
+        dtype varY = vY / (N - 1);
 
-        long double meanVar = (varX + varY) / 2;
+        dtype meanVar = (varX + varY) / 2;
 
-        return meanVar * tol;
-
+        //return meanVar * tol;
+        return 0.00043888131958223433; // good centroids
+        //return 0.00043888131958223433; // bad centroids
     }
 }
 
-/*void writeFile() {
-    fstream myfile;
-    myfile.open("/gpfs/projects/bsc28/bsc28912/k-means/c_implementation/output.csv");
-    myfile << "x,y,c" << endl;
-
-    for (vector<Point>::iterator it = points->begin();
-        it != points->end(); ++it) {
-        myfile << it->x << "," << it->y << "," << it->cluster << endl;
-        cout << it->x << "," << it->y << "," << it->cluster << endl;
-    }
-    myfile.close();
-
-}*/
-
 /* Randomly inicializated centroids to k different points loaded from the file. This function will probably not be used, since we need to ensure that these centroids are exactly the same as those used in the python version. */
 
-vector < Point > randomInit(vector < Point > * points, int k) {
-    vector < Point > centroids;
+Point* randomInit(Point* points, int N, int k) {
+    Point* centroids = (Point *)malloc(k * sizeof(Point));
     srand(time(NULL));
 
     /*
 	for (int i = 0; i < k; i++) {
-		centroids.push_back(points->at(rand() % points->size())); // vector->at[n] is a syntactic shortcut for (*points)[i] which is dereferencing the vector and then accesing the position
+		centroids[i] = points[rand() % N];
 	} // Random centroids */
 
-    /*
+  /*
 	for (int i = 0; i < k; i++) {
         cout << centroids[i].x << ", " << centroids[i].y << endl;
     } // Print randomly generated centroids */
 
-    /*
-    		centroids.push_back(Point(-0.8297, 2.2032));
-        centroids.push_back(Point(-4.9989, -1.9767));
-        centroids.push_back(Point(-3.5324, -4.0766));
-        centroids.push_back(Point(-3.1374, -1.5444));
-        centroids.push_back(Point(-1.0323, 0.3882));
-    	centroids.push_back(Point(-0.8081, 1.8522));
-    	centroids.push_back(Point(-2.9555, 3.7811)); // Optimal centroids */
-
-    centroids.push_back(Point(-1.08756, 0.480849));
-    centroids.push_back(Point(-3.12783, -1.43567));
-    centroids.push_back(Point(-4.99813, -1.80588));
-    centroids.push_back(Point(-3.5161, -4.12267));
-    centroids.push_back(Point(-3.60242, -4.02816));
-    centroids.push_back(Point(-0.912942, 0.309218));
-    centroids.push_back(Point(-3.4735, -4.13939)); // Bad centroids */
+  
+    	centroids[0] = Point(-0.8297, 2.2032);
+        centroids[1] = Point(-4.9989, -1.9767);
+        centroids[2] = Point(-3.5324, -4.0766);
+        centroids[3] = Point(-3.1374, -1.5444);
+        centroids[4] = Point(-1.0323, 0.3882);
+    	centroids[5] = Point(-0.8081, 1.8522);
+    	centroids[6] = Point(-2.9555, 3.7811); // Optimal centroids */
+                                               //
+        cout << "AAAA" <<centroids[6].y << endl;
+/*
+    centroids[0] = Point(-1.08756, 0.480849);
+    centroids[1] = Point(-3.12783, -1.43567);
+    centroids[2] = Point(-4.99813, -1.80588);
+    centroids[3] = Point(-3.5161, -4.12267);
+    centroids[4] = Point(-3.60242, -4.02816);
+    centroids[5] = Point(-0.912942, 0.309218);
+    centroids[6] = Point(-3.4735, -4.13939); // Bad centroids */
 
     return centroids;
 
 }
 
-void kMeansClustering(vector < Point > * points, int k, size_t maxIter, long double tol) {
+void kMeansClustering(Point* points, int N, int k, size_t maxIter, dtype tol) {
 
-    vector < Point > centroids = randomInit(points, k);
-    long double t = tolerance(points, tol);
+    Point* centroids = randomInit(points, N, k);
+    dtype t = tolerance(points, N, tol);
     cout << "tolerancia " << t << endl;
+
+    
+    // Recompute centroids
+    int* nPoints = (int*) malloc(sizeof(int) * k);
+    dtype* sumX = (dtype*) malloc(sizeof(dtype) * k);
+    dtype* sumY = (dtype*) malloc(sizeof(dtype) * k);
+    dtype* centroidShift = (dtype*) malloc(sizeof(dtype) * k);
 
     // START TIMER
     auto start = std::chrono::high_resolution_clock::now();
 
     for (size_t iter = 0; iter < maxIter; iter++) {
 
+        // print centroids
+        cout << "Centroides: [";
+        for (int i = 0; i < k-1; i++) {
+            cout << " [" << centroids[i].x << ", " << centroids[i].y << "]," << endl;
+        }
+        cout << " [" << centroids[k-1].x << ", " << centroids[k-1].y << "]]" << endl;
+
+        // Set aux vectors to 0
+        for (int j = 0; j < k; j++) {
+            nPoints[j] = 0;
+            sumX[j] = 0;
+            sumY[j] = 0;
+            centroidShift[j] = 0;
+        }
+
         // Assign each point to a centroid
-        for (int i = 0; i < points -> size(); i++) {
-            Point currentPoint = points -> at(i);
+        for (int i = 0; i < N; i++) {
+            Point* currentPoint = &points[i];
             for (int j = 0; j < k; j++) {
-                long double dist = centroids[j].distance(currentPoint);
-                if (dist < currentPoint.minDist) {
-                    currentPoint.minDist = dist;
-                    currentPoint.cluster = j;
+                dtype dist = centroids[j].distance(currentPoint);
+                if (dist < currentPoint->minDist) {
+                    currentPoint->minDist = dist;
+                    currentPoint->cluster = j;
                 }
             }
-            points -> at(i) = currentPoint;
         }
 
-        // Recompute centroids
-        vector < int > nPoints;
-        vector < long double > sumX, sumY, centroidShift; // Keeps track of centroids that have already converged
-
-        // Initialise with zeroes
-        for (int i = 0; i < k; i++) {
-            nPoints.push_back(0);
-            sumX.push_back(0.0);
-            sumY.push_back(0.0);
-            centroidShift.push_back(0.0);
-        }
 
         // Iterate over points to append to cada centroids. Keep track of number of points per centroid, sum of total x values per centroid and y values per centroid
-        for (int i = 0; i < k; i++) {
-            for (int j = 0; j < points -> size(); j++) {
-                if (points -> at(j).cluster == i) {
-                    nPoints[i] += 1;
-                    sumX[i] += points -> at(j).x;
-                    sumY[i] += points -> at(j).y;
+        for (int j = 0; j < k; j++) {
+            for (int i = 0; i < N; i++) {
+                if (points[i].cluster == j) {
+                    nPoints[j] += 1;
+                    sumX[j] += points[i].x;
+                    sumY[j] += points[i].y;
                 }
             }
 
         }
 
-        //Point oldCentroid;
-        //Point newCentroid;
         // Compute the new centroids
-        for (int i = 0; i < centroids.size(); i++) {
-            Point oldCentroid = centroids[i];
+        for (int j = 0; j < k; j++) {
+            Point oldCentroid = centroids[j];
 
-            Point newCentroid;
-            newCentroid.x = sumX[i] / nPoints[i];
-            newCentroid.y = sumY[i] / nPoints[i];
+            centroids[j].x = sumX[j] / nPoints[j];
+            centroids[j].y = sumY[j] / nPoints[j];
 
-            centroids[i] = newCentroid;
-
-            centroidShift[i] = oldCentroid.shift(newCentroid);
+            centroidShift[j] = oldCentroid.shift(&centroids[j]);
         } // */
 
-        long double totalShift = 0.0;
-        for (int i = 0; i < centroidShift.size(); i++) {
-            totalShift += centroidShift[i];
+        dtype totalShift = 0.0;
+        for (int j = 0; j < k; j++) {
+            totalShift += centroidShift[j];
+            cout << "centroid shift for " << j << ": " << centroidShift[j] << endl;
         }
-        //cout << std::setprecision(20) << totalShift << endl;
+        cout << std::setprecision(20) << totalShift << endl;
 
         if (iter > 0 && totalShift < t) {
             cout << std::setprecision(20) << std::fixed << "Converged at iteration " << iter << endl;
@@ -259,8 +249,8 @@ void kMeansClustering(vector < Point > * points, int k, size_t maxIter, long dou
 
     ofstream myfile;
     myfile.open("pointlabel.csv");
-    for (int i = 0; i < points -> size(); i++) {
-        myfile << points -> at(i).x << "," << points -> at(i).y << "," << points -> at(i).cluster << endl;
+    for (int i = 0; i < N; i++) {
+        myfile << points[i].x << "," << points[i].y << "," << points[i].cluster << endl;
     }
     myfile.close();
     // */
@@ -268,8 +258,8 @@ void kMeansClustering(vector < Point > * points, int k, size_t maxIter, long dou
     ofstream myfile1;
     myfile1.open("centroids.txt");
     myfile1 << "[" << endl;
-    for (int i = 0; i < k; i++) {
-        myfile1 << "[" << centroids[i].x << "," << centroids[i].y << "]," << endl;
+    for (int j = 0; j < k; j++) {
+        myfile1 << "[" << centroids[j].x << "," << centroids[j].y << "]," << endl;
     }
     myfile1 << "]" << endl;
     myfile1.close();
@@ -277,12 +267,10 @@ void kMeansClustering(vector < Point > * points, int k, size_t maxIter, long dou
 
 }
 
-main() {
+int main() {
 
-    vector < Point > source = readFile("/gpfs/projects/bsc28/bsc28912/k-means/c_implementation/uniform_small_2d_lowstddev/uniform_small_2d_lowstddev_samples.csv");
-    kMeansClustering( & source, 7, 10000, 0.0001);
+    Point* source = readFile("/home/bscuser/Workspace/pe/kmeans-ompss-2/c_implementation/uniform_small_2d_lowstddev_samples.csv", 10000);
+    kMeansClustering( source, 10000, 7, 300, 0.0001);
     return 0;
 
 }
-
-
