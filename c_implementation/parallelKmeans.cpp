@@ -6,159 +6,16 @@
 #include <cmath>
 #include <iomanip>
 #include <chrono>
+#include <nanos6/debug.h>
+#include "util.cpp"
 
 using namespace std;
-
-typedef double dtype;
-
-/* Using struct to represent datapoints. Structs are very much like classes, but all members are public by default.
-A point will contain the information of its coordinates, its closest centroid and how far away it is from that centroid.
-It will also implement a distance function, that will allow it to calculate the euclidean distance between itself and another given point.
-
-Reference:
-
-How to deine a new point in the origin
-Point p1 = Point(0, 0);
-cout << p1.x << endl;
-
-How to define a point in another place and define the square distance
-Point p2 = Point(3, 4);
-cout << p1.distance(p2) << endl;
-
-*/
-
-struct Point {
-    dtype x, y; // Two dimentional points, in order to turn them into n-dimensional points we will later use vectors
-    int cluster; // Which cluster is this point associated to
-    dtype minDist; // How far away is this point from its nearest cluster. Default to max double.
-
-    Point():
-        x(0.0),
-        y(0.0),
-        cluster(-1),
-        minDist(__DBL_MAX__) {} // Default initialisation list
-
-    Point(dtype x, dtype y):
-        x(x),
-        y(y),
-        cluster(-1),
-        minDist(__DBL_MAX__) {} // User value initialisation list
-
-    dtype distance(Point *p) {
-        return sqrt((p->x - x) * (p->x - x) + (p->y - y) * (p->y - y)); // Return euclidean distance from the current point vs another given point. When we torn Point into an n-dim Point, we will replace this with a loop.
-    }
-
-    dtype shift(Point *p) {
-        return ((p->x - x) * (p->x - x) + (p->y - y) * (p->y - y));
-    }
-
-};
-
-/* Reading data from the .csv file and using it to create a vector of Points. */
-
-Point* readFile(string filename, size_t N) {
-    Point* points = (Point* ) malloc(N*sizeof(Point));
-    string line;
-    ifstream file(filename);
-    size_t pId = 0;
-    while (getline(file, line)) {
-        stringstream lineStream(line);
-        string bit;
-        dtype x, y;
-        getline(lineStream, bit, ',');
-        x = stof(bit);
-        getline(lineStream, bit, '\n');
-        y = stof(bit);
-
-        points[pId] = Point(x, y);
-        pId++;
-    }
-
-    //for (int i =  0; i < N; i++) {
-    //    cout << points[i].x << "," << points[i].y << endl;
-    //}
-
-    return points;
-}
-
-dtype tolerance(Point* points, size_t N, dtype tol) {
-    if (tol == 0) {
-        return 0;
-    } else { // Partiendo del principio de que no le vamos a pasar datos sparse
-        dtype sumX = 0;
-        dtype sumY = 0;
-
-        for (int i = 0; i < N; i++) {
-            sumX += points[i].x;
-            sumY += points[i].y;
-        }
-
-        dtype meanX = sumX / N;
-        dtype meanY = sumY / N;
-
-        dtype vX = 0;
-        dtype vY = 0;
-
-        for (int i = 0; i < N; i++) {
-            vX += ((points[i].x - meanX) * (points[i].x - meanX));
-            vY += ((points[i].y - meanY) * (points[i].y - meanY));
-        }
-
-        dtype varX = vX / (N - 1);
-        dtype varY = vY / (N - 1);
-
-        dtype meanVar = (varX + varY) / 2;
-
-        //return meanVar * tol;
-        return 0.00043888131958223433; // good centroids
-        //return 0.00043888131958223433; // bad centroids
-    }
-}
-
-/* Randomly inicializated centroids to k different points loaded from the file. This function will probably not be used, since we need to ensure that these centroids are exactly the same as those used in the python version. */
-
-Point* randomInit(Point* points, int N, int k) {
-    Point* centroids = (Point *)malloc(k * sizeof(Point));
-    srand(time(NULL));
-
-    /*
-	for (int i = 0; i < k; i++) {
-		centroids[i] = points[rand() % N];
-	} // Random centroids */
-
-  /*
-	for (int i = 0; i < k; i++) {
-        cout << centroids[i].x << ", " << centroids[i].y << endl;
-    } // Print randomly generated centroids */
-
-  
-    	centroids[0] = Point(-0.8297, 2.2032);
-        centroids[1] = Point(-4.9989, -1.9767);
-        centroids[2] = Point(-3.5324, -4.0766);
-        centroids[3] = Point(-3.1374, -1.5444);
-        centroids[4] = Point(-1.0323, 0.3882);
-    	centroids[5] = Point(-0.8081, 1.8522);
-    	centroids[6] = Point(-2.9555, 3.7811); // Optimal centroids */
-                                               //
-        cout << "AAAA" <<centroids[6].y << endl;
-/*
-    centroids[0] = Point(-1.08756, 0.480849);
-    centroids[1] = Point(-3.12783, -1.43567);
-    centroids[2] = Point(-4.99813, -1.80588);
-    centroids[3] = Point(-3.5161, -4.12267);
-    centroids[4] = Point(-3.60242, -4.02816);
-    centroids[5] = Point(-0.912942, 0.309218);
-    centroids[6] = Point(-3.4735, -4.13939); // Bad centroids */
-
-    return centroids;
-
-}
 
 void kMeansClustering(Point* points, int N, int k, size_t maxIter, dtype tol) {
 
     Point* centroids = randomInit(points, N, k);
     dtype t = tolerance(points, N, tol);
-    cout << "tolerancia " << t << endl;
+    //cout << "tolerancia " << t << endl;
 
     
     // Recompute centroids
@@ -167,17 +24,20 @@ void kMeansClustering(Point* points, int N, int k, size_t maxIter, dtype tol) {
     dtype* sumY = (dtype*) malloc(sizeof(dtype) * k);
     dtype* centroidShift = (dtype*) malloc(sizeof(dtype) * k);
 
+    size_t ncpus = nanos6_get_total_num_cpus();
+    cout << "NCPUS=" << ncpus<< endl;
+
     // START TIMER
     auto start = std::chrono::high_resolution_clock::now();
 
     for (size_t iter = 0; iter < maxIter; iter++) {
 
         // print centroids
-        cout << "Centroides: [";
-        for (int i = 0; i < k-1; i++) {
-            cout << " [" << centroids[i].x << ", " << centroids[i].y << "]," << endl;
-        }
-        cout << " [" << centroids[k-1].x << ", " << centroids[k-1].y << "]]" << endl;
+       // cout << "Centroides: [";
+       // for (int i = 0; i < k-1; i++) {
+       //     cout << " [" << centroids[i].x << ", " << centroids[i].y << "]," << endl;
+       // }
+       // cout << " [" << centroids[k-1].x << ", " << centroids[k-1].y << "]]" << endl;
 
         // Set aux vectors to 0
         for (int j = 0; j < k; j++) {
@@ -187,7 +47,9 @@ void kMeansClustering(Point* points, int N, int k, size_t maxIter, dtype tol) {
             centroidShift[j] = 0;
         }
 
+        size_t BS = N/(ncpus/8);
         // Assign each point to a centroid
+        #pragma oss taskloop grainsize(BS) inout(points[i;BS]) in(centroids[0;k])
         for (int i = 0; i < N; i++) {
             Point* currentPoint = &points[i];
             for (int j = 0; j < k; j++) {
@@ -198,12 +60,15 @@ void kMeansClustering(Point* points, int N, int k, size_t maxIter, dtype tol) {
                 }
             }
         }
-
+        
+        #pragma oss taskwait
 
         // Iterate over points to append to cada centroids. Keep track of number of points per centroid, sum of total x values per centroid and y values per centroid
+        //#pragma oss taskloop 
         for (int j = 0; j < k; j++) {
             for (int i = 0; i < N; i++) {
                 if (points[i].cluster == j) {
+
                     nPoints[j] += 1;
                     sumX[j] += points[i].x;
                     sumY[j] += points[i].y;
@@ -211,6 +76,7 @@ void kMeansClustering(Point* points, int N, int k, size_t maxIter, dtype tol) {
             }
 
         }
+
 
         // Compute the new centroids
         for (int j = 0; j < k; j++) {
@@ -225,9 +91,9 @@ void kMeansClustering(Point* points, int N, int k, size_t maxIter, dtype tol) {
         dtype totalShift = 0.0;
         for (int j = 0; j < k; j++) {
             totalShift += centroidShift[j];
-            cout << "centroid shift for " << j << ": " << centroidShift[j] << endl;
+            //cout << "centroid shift for " << j << ": " << centroidShift[j] << endl;
         }
-        cout << std::setprecision(20) << totalShift << endl;
+        //cout << std::setprecision(20) << totalShift << endl;
 
         if (iter > 0 && totalShift < t) {
             cout << std::setprecision(20) << std::fixed << "Converged at iteration " << iter << endl;
@@ -242,7 +108,8 @@ void kMeansClustering(Point* points, int N, int k, size_t maxIter, dtype tol) {
     ofstream time;
     time.open("time.csv");
 
-    time << std::chrono::duration_cast < std::chrono::nanoseconds > (finish - start).count() << "ns\n";
+    time << std::chrono::duration<double,std::milli>(finish - start).count()/1000. << "s\n";
+    cout << std::chrono::duration<double,std::milli>(finish - start).count()/1000. << "s\n";
 
     time.close();
     // */
@@ -269,8 +136,8 @@ void kMeansClustering(Point* points, int N, int k, size_t maxIter, dtype tol) {
 
 int main() {
 
-    Point* source = readFile("/home/bscuser/Workspace/pe/kmeans-ompss-2/c_implementation/uniform_small_2d_lowstddev_samples.csv", 10000);
-    kMeansClustering( source, 10000, 7, 300, 0.0001);
+    Point* source = readFile("/gpfs/projects/bsc15/bsc15889/coopnov24/kmeans-ompss-2/c_implementation/uniform_small_2d_lowstddev_samples.csv", 1000000);
+    kMeansClustering( source, 1000000, 7, 300, 0.0001);
     return 0;
 
 }
