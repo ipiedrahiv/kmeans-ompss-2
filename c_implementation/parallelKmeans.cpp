@@ -7,7 +7,7 @@
 #include <iomanip>
 #include <chrono>
 #include <nanos6/debug.h>
-#include "util.cpp"
+#include "2dutils.cpp"
 
 using namespace std;
 
@@ -136,7 +136,7 @@ void kMeansClustering(Point* points, int N, int k, size_t maxIter, dtype tol) {
 
 int main() {
 
-    Point* source = readFile("/gpfs/projects/bsc15/bsc15889/coopnov24/kmeans-ompss-2/c_implementation/uniform_small_2d_lowstddev_samples.csv", 1000000);
+    Point* source = readFile("/home/bscuser/Workspace/kmeans-ompss-2/datasets/uniform_small_2d_lowstddev_samples.csv", 1000000);
     kMeansClustering( source, 1000000, 7, 300, 0.0001);
     return 0;
 

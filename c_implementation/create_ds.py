@@ -9,9 +9,9 @@ def create_arrays(n_samples, n_features, centers, cluster_std, center_box, rando
     return X, y, c
 
 # Create a dataset with uniform, 2d, no-overlap, k = 7 clusters
-X, y, c = create_arrays(1000000, 2, 7, 0.1, [-100000, 100000], 1)
+X, y, c = create_arrays(1000, 10, 4, 0.1, [-100000, 100000], 1)
 
 
-np.savetxt("uniform_small_2d_lowstddev/uniform_large_2d_lowstddev_samples.csv", X, delimiter=",")
-np.savetxt("uniform_small_2d_lowstddev/uniform_large_2d_lowstddev_labels.csv", y, delimiter=",")
-np.savetxt("uniform_small_2d_lowstddev/uniform_large_2d_lowstddev_centers.csv", c, delimiter=",")
+np.savetxt("uniform_small_10d_samples.csv", X, delimiter=",")
+np.savetxt("uniform_small_10d_labels.csv", y, delimiter=",")
+np.savetxt("uniform_small_10d_centers.csv", c, delimiter=",")
