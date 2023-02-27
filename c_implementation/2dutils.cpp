@@ -14,17 +14,13 @@ typedef double dtype;
 /* Using struct to represent datapoints. Structs are very much like classes, but all members are public by default.
 A point will contain the information of its coordinates, its closest centroid and how far away it is from that centroid.
 It will also implement a distance function, that will allow it to calculate the euclidean distance between itself and another given point.
-
 Reference:
-
 How to deine a new point in the origin
 Point p1 = Point(0, 0);
 cout << p1.x << endl;
-
 How to define a point in another place and define the square distance
 Point p2 = Point(3, 4);
 cout << p1.distance(p2) << endl;
-
 */
 
 struct Point {
@@ -55,7 +51,6 @@ struct Point {
 };
 
 /* Reading data from the .csv file and using it to create a vector of Points. */
-
 double* readFile(string filename, size_t N, size_t numFeatures) {
     double* points = (double* ) malloc(N*numFeatures*sizeof(double));
     string element;
@@ -69,10 +64,11 @@ double* readFile(string filename, size_t N, size_t numFeatures) {
     return points;
 }
 
-dtype tolerance(Point* points, size_t N, double tol) {
-   /* if (tol == 0) {
+
+dtype tolerance(Point* points, size_t N, dtype tol) {
+    if (tol == 0) {
         return 0;
-    } else { // Partiendo del principio de que no le vamos a pasar datos sparse
+    }else { // Partiendo del principio de que no le vamos a pasar datos sparse
         dtype sumX = 0;
         dtype sumY = 0;
 
@@ -97,10 +93,10 @@ dtype tolerance(Point* points, size_t N, double tol) {
 
         dtype meanVar = (varX + varY) / 2;
 
-        //return meanVar * tol;
-        return 0.0001; // good centroids
+        return meanVar * tol;
+        //return 0.00043888131958223433; // good centroids
         //return 0.00043888131958223433; // bad centroids
-    }*/
+    }
 }
 
 /* Randomly inicializated centroids to k different points loaded from the file. This function will probably not be used, since we need to ensure that these centroids are exactly the same as those used in the python version. */
@@ -108,33 +104,29 @@ dtype tolerance(Point* points, size_t N, double tol) {
 double* randomInit(double* points, int N, int k, int numFeatures) {
     double* centroids = (double *)malloc(k * numFeatures * sizeof(double));
     srand(time(NULL));
-
-    
+	/*
 	for (int i = 0; i < k; i++) {
         int index = rand() % N;
         cout << index << endl;
-		centroids[i] = points[index];
-	} // Random centroids */
-
-   /* 
-    	centroids[0] = Point(-0.8297, 2.2032);
-        centroids[1] = Point(-4.9989, -1.9767);
-        centroids[2] = Point(-3.5324, -4.0766);
-        centroids[3] = Point(-3.1374, -1.5444);
-        centroids[4] = Point(-1.0323, 0.3882);
-    	centroids[5] = Point(-0.8081, 1.8522);
-    	centroids[6] = Point(-2.9555, 3.7811); // Optimal centroids */
+        centroids[i] = points[index];
+    } // Random centroids */
+	
+  
+    	centroids[0] =  -0.8297;
+    	centroids[1] =   2.2032;
+        centroids[2] =  -4.9989;
+        centroids[3] =  -1.9767;
+        centroids[4] =  -3.5324;
+        centroids[5] =  -4.0766;
+        centroids[6] =  -3.1374;
+        centroids[7] =  -1.5444;
+        centroids[8] =  -1.0323;
+        centroids[9] =  0.3882;
+    	centroids[10] = -0.8081;
+    	centroids[11] = 1.8522;
+    	centroids[12] = -2.9555; // Optimal centroids */
+    	centroids[13] = 3.7811; // Optimal centroids */
                                                //
-        //cout << "AAAA" <<centroids[6].y << endl;
-/*
-    centroids[0] = Point(-1.08756, 0.480849);
-    centroids[1] = Point(-3.12783, -1.43567);
-    centroids[2] = Point(-4.99813, -1.80588);
-    centroids[3] = Point(-3.5161, -4.12267);
-    centroids[4] = Point(-3.60242, -4.02816);
-    centroids[5] = Point(-0.912942, 0.309218);
-    centroids[6] = Point(-3.4735, -4.13939); // Bad centroids */
-
     return centroids;
 
 }
@@ -144,10 +136,10 @@ double distance(double* point, double* centroid, int numFeatures) {
     for(int feature = 0; feature < numFeatures; feature++){
         distance += (point[feature]-centroid[feature])*(point[feature]-centroid[feature]);
     }
-    cout << distance << endl;
-    if(isnan(distance)||distance == 0) {
-        cout << "point: " << point[0] << ", " << point[1] << endl;
-        cout << "centroid: " << centroid[0] << ", " << centroid[1] << endl;
-    }
+   // cout << distance << endl;
+   // if(isnan(distance)||distance == 0) {
+   //     cout << "point: " << point[0] << ", " << point[1] << endl;
+   //     cout << "centroid: " << centroid[0] << ", " << centroid[1] << endl;
+   // }
     return distance;
 }
